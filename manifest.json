@@ -1,0 +1,12 @@
+[
+    {
+        "guid": "f941e6d6-600a-474d-83bd-8e979e8747a0",
+        "name": "TBD Exclusive Style",
+        "overview": "TorrentBD-style 3D poster carousel on the Jellyfin home page.",
+        "description": "Shows featured items as Primary (poster) images in a coverflow carousel like TorrentBD's Exclusives section. Based on lachlandcp's Editor's Choice plugin (MIT).",
+        "owner": "",
+        "category": "General",
+        "imageUrl": "",
+        "versions": []
+    }
+]
