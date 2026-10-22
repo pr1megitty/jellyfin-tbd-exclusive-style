@@ -1,0 +1,75 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Plugin version (4 numbers, e.g. 1.0.0.0)"
+        required: true
+        default: "1.0.0.0"
+      changelog:
+        description: "Changelog text"
+        required: false
+        default: "TBD-style poster carousel."
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build plugin
+        run: |
+          dotnet publish TbdExclusivePlugin/TbdExclusivePlugin.csproj -c Release -o out \
+            /p:AssemblyVersion=${{ inputs.version }} /p:FileVersion=${{ inputs.version }}
+          cd out
+          zip ../TbdExclusivePlugin-v${{ inputs.version }}.zip TbdExclusivePlugin.dll
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ inputs.version }}" "TbdExclusivePlugin-v${{ inputs.version }}.zip" \
+            --title "TBD Exclusive Style v${{ inputs.version }}" \
+            --notes "${{ inputs.changelog }}"
+
+      - name: Update manifest.json
+        env:
+          VERSION: ${{ inputs.version }}
+          CHANGELOG: ${{ inputs.changelog }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          python3 - <<'PY'
+          import json, os, hashlib, datetime
+          ver = os.environ["VERSION"]; repo = os.environ["REPO"]
+          zipname = f"TbdExclusivePlugin-v{ver}.zip"
+          md5 = hashlib.md5(open(zipname, "rb").read()).hexdigest()
+          entry = {
+              "version": ver,
+              "changelog": os.environ["CHANGELOG"],
+              "targetAbi": "12.1.0.0",
+              "sourceUrl": f"https://github.com/{repo}/releases/download/v{ver}/{zipname}",
+              "checksum": md5,
+              "timestamp": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+          }
+          m = json.load(open("manifest.json"))
+          p = m[0]
+          p["owner"] = os.environ["OWNER"]
+          p["imageUrl"] = f"https://raw.githubusercontent.com/{repo}/main/logo.png"
+          p["versions"] = [v for v in p["versions"] if v["version"] != ver]
+          p["versions"].insert(0, entry)
+          json.dump(m, open("manifest.json", "w"), indent=4)
+          PY
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "Release ${VERSION}"
+          git push origin HEAD:main
