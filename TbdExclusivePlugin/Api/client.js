@@ -559,6 +559,13 @@ function mountPosterCarousel(containerElem, favourites, data, baseUrl) {
     const step = cardW * 0.78;            // horizontal gap between cards
     const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Phones keep the tight spacing; wide screens (PC) get a visible gap between cards, like TorrentBD.
+    function spacing() {
+        return wrap.clientWidth >= 900
+            ? { first: 1.4, next: 0.8 }
+            : { first: 0.74, next: 0.52 };
+    }
+
     function layout() {
         items.forEach((el, i) => {
             let d = i - active;
@@ -575,7 +582,8 @@ function mountPosterCarousel(containerElem, favourites, data, baseUrl) {
             }
             const dir = Math.sign(d);
             // centre card sits forward; neighbours are pushed apart and back, like the TBD carousel
-            const x = d === 0 ? 0 : dir * (cardW * 0.62 + (abs - 1) * cardW * 0.52 + cardW * 0.12);
+            const m = spacing();
+            const x = d === 0 ? 0 : dir * (cardW * m.first + (abs - 1) * cardW * m.next);
             const z = d === 0 ? 0 : -(abs * 110);
             const scale = d === 0 ? 1.08 : 1;
             el.style.transform = `translateX(${x}px) translateZ(${z}px) scale(${scale})`;
@@ -600,6 +608,14 @@ function mountPosterCarousel(containerElem, favourites, data, baseUrl) {
                 go(i);                                   // side card -> bring to centre
             }
         });
+    });
+
+    // Re-apply spacing when the window is resized (e.g. rotating a tablet, resizing a browser)
+    let resizeRaf = null;
+    window.addEventListener("resize", () => {
+        if (!wrap.isConnected) return;
+        if (resizeRaf) cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(layout);
     });
 
     // Arrows
