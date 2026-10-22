@@ -311,18 +311,16 @@ const container = `
     -webkit-user-drag: none;
   }
   .ecPosterMeta {
-    margin-top: .45em;
-    font-size: .9em;
+    margin-top: .5em;
+    font-size: .85em;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    opacity: .9;
+    padding: 0 .2em;
   }
-  .ecPosterMeta .ecSep { opacity: .45; margin: 0 .4em; }
-  .ecPosterMeta .ecYear { color: #26c6da; }
-  .ecPosterMeta .ecRate { color: #f2b01e; }
-  .ecPosterItem.is-center .ecPosterMeta { font-size: 1.05em; }
-  .ecPosterItem:not(.is-center) .ecPosterMeta { opacity: .6; }
+  .ecPosterItem.is-center .ecPosterMeta { font-size: 1.05em; font-weight: 600; }
+  .ecPosterItem:not(.is-center) .ecPosterMeta { opacity: .8; }
   .ecPosterNav {
     position: absolute; top: 50%; z-index: 100; transform: translateY(-50%);
     background: rgba(0,0,0,.45); border: 0; color: #fff; border-radius: 50%;
@@ -503,20 +501,24 @@ function renderNormalSlide(item, data, baseUrl) {
 }
 
 /* ===== Poster carousel (TorrentBD-style) ===== */
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
 function buildPosterMeta(item) {
-    const parts = [];
-    if (item.year) parts.push(`<span class="ecYear">${item.year}</span>`);
-    const rating = typeof item.community_rating === "number" ? Number(item.community_rating.toFixed(1)) : 0;
-    if (rating > 0) parts.push(`<span class="ecRate">★ ${rating}</span>`);
-    const sep = '<span class="ecSep">|</span>';
-    return parts.length ? parts.join(sep) : "";
+    // Title only (no year/rating) to keep the row clean and uncongested.
+    return escapeHtml(item.name);
 }
 
 function renderPosterSlide(item, data, baseUrl) {
     // Primary = poster image. reduceImageSizes caps the height so we don't pull full-res posters.
     const size = data.reduceImageSizes ? "?maxHeight=600&quality=90" : "";
     const src = `../Items/${item.id}/Images/Primary/0${size}`;
-    const safeName = String(item.name || "").replace(/"/g, "&quot;");
+    const safeName = escapeHtml(item.name);
     return `<a href="${baseUrl}#/details?id=${item.id}"
                class="ecPosterItem"
                title="${safeName}"
