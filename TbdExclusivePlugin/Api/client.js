@@ -321,6 +321,20 @@ const container = `
   }
   .ecPosterItem.is-center .ecPosterMeta { font-size: 1.05em; font-weight: 600; }
   .ecPosterItem:not(.is-center) .ecPosterMeta { opacity: .8; }
+  .ecPosterLabel {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.05em;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: #f5b82e;
+    text-shadow: 0 0 14px rgba(245,184,46,.30);
+    margin: .4em 0 .1em;
+    padding-left: .28em; /* balances the trailing letter-spacing so it is truly centred */
+  }
+  @media screen and (max-width: 600px) {
+    .ecPosterLabel { font-size: .8em; letter-spacing: .22em; margin: .2em 0 0; }
+  }
   .ecPosterNav {
     position: absolute; top: 50%; z-index: 100; transform: translateY(-50%);
     background: rgba(0,0,0,.45); border: 0; color: #fff; border-radius: 50%;
@@ -538,6 +552,10 @@ function mountPosterCarousel(containerElem, favourites, data, baseUrl) {
     const cardW = Math.round((cardH - 40) * (2 / 3));  // 2:3 poster ratio
     wrap.style.height = `${bannerH}px`;
     wrap.innerHTML = favourites.map((it) => renderPosterSlide(it, data, baseUrl)).join("");
+    const label = document.createElement("div");
+    label.className = "ecPosterLabel";
+    label.textContent = (data.heading && String(data.heading).trim()) || "Exclusives";
+    section.parentNode.insertBefore(label, section);
     section.parentNode.insertBefore(wrap, section);
     containerElem.classList.add("tbdExclusivePosterMode");
 
@@ -758,9 +776,6 @@ async function setup() {
                     // Poster (Primary image) coverflow, no Splide needed.
                     const posterItems = favourites.filter((f) => f.hasPrimary !== false);
                     containerElem.querySelector(".tbdExclusiveScrollButtonsContainer")?.remove();
-                    if ("heading" in data && data.heading) {
-                        containerElem.insertAdjacentHTML("afterbegin", `<h2 class="sectionTitle sectionTitle-cards">${data.heading}</h2>`);
-                    }
                     homeTab?.classList.remove("tbdExclusiveHeroMode");
                     mountPosterCarousel(containerElem, posterItems, data, baseUrl);
                     initializedContainers.add(elem);
