@@ -322,18 +322,30 @@ const container = `
   .ecPosterItem.is-center .ecPosterMeta { font-size: 1.05em; font-weight: 600; }
   .ecPosterItem:not(.is-center) .ecPosterMeta { opacity: .8; }
   .ecPosterLabel {
+    display: block;
+    width: fit-content;
+    margin: 6px auto 2px;
+    padding-left: .42em; /* balances the trailing letter-spacing so it is truly centred */
     text-align: center;
-    font-weight: 700;
-    font-size: 1.05em;
-    letter-spacing: .28em;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: .42em;
     text-transform: uppercase;
-    color: #f5b82e;
-    text-shadow: 0 0 14px rgba(245,184,46,.30);
-    margin: .4em 0 .1em;
-    padding-left: .28em; /* balances the trailing letter-spacing so it is truly centred */
+    background: linear-gradient(90deg, #c98a0b 0%, #ffd75e 25%, #fff6c8 50%, #ffd75e 75%, #c98a0b 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 6px rgba(255,200,60,.55));
+    animation: ecLabelShine 3s linear infinite;
+  }
+  @keyframes ecLabelShine { to { background-position: -200% center; } }
+  @media (prefers-reduced-motion: reduce) {
+    .ecPosterLabel { animation: none; }
   }
   @media screen and (max-width: 600px) {
-    .ecPosterLabel { font-size: .8em; letter-spacing: .22em; margin: .2em 0 0; }
+    .ecPosterLabel { font-size: 16px; margin: 4px auto 0; }
   }
   .ecPosterNav {
     position: absolute; top: 50%; z-index: 100; transform: translateY(-50%);
