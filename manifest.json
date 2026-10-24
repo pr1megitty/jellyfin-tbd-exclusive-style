@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/pr1megitty/jellyfin-tbd-exclusive-style/main/logo.png",
         "versions": [
             {
+                "version": "1.0.5.0",
+                "changelog": "TBD-style poster carousel.",
+                "targetAbi": "12.1.0.0",
+                "sourceUrl": "https://github.com/pr1megitty/jellyfin-tbd-exclusive-style/releases/download/v1.0.5.0/TbdExclusivePlugin-v1.0.5.0.zip",
+                "checksum": "a8d8a6b7e5e78a37a92cc51855f27fec",
+                "timestamp": "2026-10-24 13:52:38"
+            },
+            {
                 "version": "1.0.4.0",
                 "changelog": "TBD-style poster carousel.",
                 "targetAbi": "12.1.0.0",
