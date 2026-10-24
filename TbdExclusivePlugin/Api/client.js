@@ -322,9 +322,13 @@ const container = `
   .ecPosterItem.is-center .ecPosterMeta { font-size: 1.05em; font-weight: 600; }
   .ecPosterItem:not(.is-center) .ecPosterMeta { opacity: .8; }
   .ecPosterLabel {
-    display: block;
-    width: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     margin: 6px auto 2px;
+  }
+  .ecPosterLabelText {
     padding-left: .42em; /* balances the trailing letter-spacing so it is truly centred */
     text-align: center;
     font-size: 22px;
@@ -340,12 +344,20 @@ const container = `
     filter: drop-shadow(0 0 6px rgba(255,200,60,.55));
     animation: ecLabelShine 3s linear infinite;
   }
+  .ecPosterLabelLine {
+    flex: 0 1 90px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e0a420);
+  }
+  .ecPosterLabelLine:last-child { background: linear-gradient(90deg, #e0a420, transparent); }
   @keyframes ecLabelShine { to { background-position: -200% center; } }
   @media (prefers-reduced-motion: reduce) {
-    .ecPosterLabel { animation: none; }
+    .ecPosterLabelText { animation: none; }
   }
   @media screen and (max-width: 600px) {
-    .ecPosterLabel { font-size: 16px; margin: 4px auto 0; }
+    .ecPosterLabel { gap: 8px; margin: 4px auto 0; }
+    .ecPosterLabelText { font-size: 16px; }
+    .ecPosterLabelLine { flex-basis: 40px; }
   }
   .ecPosterNav {
     position: absolute; top: 50%; z-index: 100; transform: translateY(-50%);
@@ -566,7 +578,14 @@ function mountPosterCarousel(containerElem, favourites, data, baseUrl) {
     wrap.innerHTML = favourites.map((it) => renderPosterSlide(it, data, baseUrl)).join("");
     const label = document.createElement("div");
     label.className = "ecPosterLabel";
-    label.textContent = (data.heading && String(data.heading).trim()) || "Exclusives";
+    const labelText = document.createElement("span");
+    labelText.className = "ecPosterLabelText";
+    labelText.textContent = (data.heading && String(data.heading).trim()) || "Exclusives";
+    const lineL = document.createElement("span");
+    lineL.className = "ecPosterLabelLine";
+    const lineR = document.createElement("span");
+    lineR.className = "ecPosterLabelLine";
+    label.append(lineL, labelText, lineR);
     section.parentNode.insertBefore(label, section);
     section.parentNode.insertBefore(wrap, section);
     containerElem.classList.add("tbdExclusivePosterMode");
