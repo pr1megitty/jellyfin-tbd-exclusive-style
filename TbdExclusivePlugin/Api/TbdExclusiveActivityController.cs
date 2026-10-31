@@ -363,15 +363,63 @@ public class TbdExclusiveActivityController : ControllerBase
             {
                 BaseItem item = i;
 
+                // Seasons and episodes show the season / series poster and a short "S2 · Series" style title.
+                string displayName = item.Name;
+                Guid imageId = item.Id;
+                bool hasPrimary = item.HasImage(MediaBrowser.Model.Entities.ImageType.Primary);
+                BaseItemKind itemKind = item.GetBaseItemKind();
+
+                if (itemKind == BaseItemKind.Season || itemKind == BaseItemKind.Episode)
+                {
+                    BaseItem? series = FindSeries(item);
+                    string seriesName = series != null ? series.Name : item.Name;
+
+                    if (itemKind == BaseItemKind.Season)
+                    {
+                        if (item.IndexNumber.HasValue)
+                        {
+                            displayName = item.IndexNumber.Value == 0 ? "Specials · " + seriesName : "S" + item.IndexNumber.Value + " · " + seriesName;
+                        }
+
+                        // Fall back to the series poster if the season has none
+                        if (!hasPrimary && series != null && series.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+                        {
+                            imageId = series.Id;
+                            hasPrimary = true;
+                        }
+                    }
+                    else
+                    {
+                        if (item.ParentIndexNumber.HasValue && item.IndexNumber.HasValue)
+                        {
+                            displayName = "S" + item.ParentIndexNumber.Value + "E" + item.IndexNumber.Value + " · " + seriesName;
+                        }
+
+                        // An episode's own image is a landscape screenshot, so use the season poster (or the series poster)
+                        BaseItem? seasonItem = item.GetParent();
+                        if (seasonItem != null && seasonItem.GetBaseItemKind() == BaseItemKind.Season && seasonItem.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+                        {
+                            imageId = seasonItem.Id;
+                            hasPrimary = true;
+                        }
+                        else if (series != null && series.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+                        {
+                            imageId = series.Id;
+                            hasPrimary = true;
+                        }
+                    }
+                }
+
                 // Narrow down properties that are strictly necessary to pass through to frontend
                 Dictionary<string, object> itemObject = new Dictionary<string, object>
                 {
                     { "id", item.Id.ToString() },
-                    { "name", item.Name },
+                    { "imageId", imageId.ToString() },
+                    { "name", displayName },
                     { "tagline", item.Tagline },
                     { "official_rating", item.OfficialRating },
                     { "hasLogo", item.HasImage(MediaBrowser.Model.Entities.ImageType.Logo) },
-                    { "hasPrimary", item.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) },
+                    { "hasPrimary", hasPrimary },
                     { "year", item.ProductionYear }
                 };
 
@@ -422,6 +470,17 @@ public class TbdExclusiveActivityController : ControllerBase
 
     }
 
+    private static BaseItem? FindSeries(BaseItem item)
+    {
+        BaseItem? parent = item.GetParent();
+        while (parent != null && parent.GetBaseItemKind() != BaseItemKind.Series)
+        {
+            parent = parent.GetParent();
+        }
+
+        return parent;
+    }
+
     private List<BaseItem> PrepareResult(InternalItemsQuery query, Jellyfin.Database.Implementations.Entities.User? activeUser)
     {
         List<BaseItem> initialResult = _libraryManager.GetItemList(query).ToList();
@@ -436,17 +495,8 @@ public class TbdExclusiveActivityController : ControllerBase
             BaseItem initItem = initialResult[random.Next(initialResult.Count)];
             var shiftItem = initItem;
 
-            // Deal with episodes or seasons
-            if (shiftItem.GetBaseItemKind() == BaseItemKind.Episode || shiftItem.GetBaseItemKind() == BaseItemKind.Season)
-            {
-                shiftItem = shiftItem.GetParent();
-
-                // If the parent is a season (i.e. the favourited item was an episode) then we need to get the season's parent show
-                if (shiftItem.GetBaseItemKind() == BaseItemKind.Season)
-                {
-                    shiftItem = shiftItem.GetParent();
-                }
-            }
+            // Seasons and episodes are kept as themselves (not swapped for the parent series),
+            // so a favourited season or episode appears in Exclusives on its own.
 
             // Check is in an allowed library
             bool inFilteredLibrary = false;
@@ -466,7 +516,7 @@ public class TbdExclusiveActivityController : ControllerBase
             }
 
             // Only include if active user has parental access to this item, not already in the results, if only unplayed items should be shown & this is unplayed, and if has a backdrop image
-            if (shiftItem.IsVisible(activeUser) && !result.Contains(shiftItem) && inFilteredLibrary && !(shiftItem.IsPlayed(activeUser, null) && !_config.ShowPlayed) && shiftItem.HasImage(MediaBrowser.Model.Entities.ImageType.Backdrop))
+            if (shiftItem.IsVisible(activeUser) && !result.Contains(shiftItem) && inFilteredLibrary && !(shiftItem.IsPlayed(activeUser, null) && !_config.ShowPlayed) && (shiftItem.HasImage(MediaBrowser.Model.Entities.ImageType.Backdrop) || (_config.UsePosterCarousel && shiftItem.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))))
             {
                 result.Add(shiftItem);
             }

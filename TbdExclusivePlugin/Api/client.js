@@ -555,7 +555,7 @@ function buildPosterMeta(item) {
 function renderPosterSlide(item, data, baseUrl) {
     // Primary = poster image. reduceImageSizes caps the height so we don't pull full-res posters.
     const size = data.reduceImageSizes ? "?maxHeight=600&quality=90" : "";
-    const src = `../Items/${item.id}/Images/Primary/0${size}`;
+    const src = `../Items/${item.imageId || item.id}/Images/Primary/0${size}`;
     const safeName = escapeHtml(item.name);
     return `<a href="${baseUrl}#/details?id=${item.id}"
                class="ecPosterItem"
